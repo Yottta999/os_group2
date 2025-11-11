@@ -1,5 +1,3 @@
-
-
 TT:
 
 	movem.l %d0-%d7/%a0-%a3,-(%sp)
@@ -21,11 +19,8 @@ TT:
 	bne   DISP_UPDATE
 	clr.b  (%a1)
 
-	lea.l DIGITS, %a0
-	lea.l COLON, %a6
-
 DISP_UPDATE:
-    lea.l   FONT_TAB,%a0        /* フォントテーブル先頭 */
+    lea.l   DIGITS,%a0        /* フォントテーブル先頭 */
     lea.l   DISP_BUF,%a1        /* 出力先バッファ */
 
     move.b  MINC,%d0            /* 分 (例: 12) */
@@ -44,15 +39,10 @@ DISP_UPDATE:
     swap    %d5
 
     /** 行ループ: 0〜5行 **/
-    moveq   #0,%d6
+    moveq.l   #0,%d6
+    lea.l   DISP_BUF,%a2
 
 ROW_LOOP:
-    move.w  %d6, %d1
-    lea.l   DISP_BUF,%a2
-    mulu    #32,%d1             /* 1行32バイト間隔と仮定 */
-    adda.l  %d1,%a2
-
-    /** 5桁: 分十・分一・:・秒十・秒一 **/
     move.b  %d2,%d7
     bsr     DRAW_DIGIT_ROW      /* 分の十の位 */
     move.b  %d3,%d7
@@ -67,10 +57,13 @@ ROW_LOOP:
     move.b  #'\r',(%a2)+
     move.b  #'\n',(%a2)+
 
-    addq.w  #1,%d0
-    cmpi.w  #6,%d0
-    blt.s   ROW_LOOP
+    addq.w  #1,%d6
+    cmpi.w  #6,%d6
+	blt.s   ROW_LOOP
 
+TTKILL:
+	clr.w TTC
+	
     movem.l (%sp)+, %d0-%d7/%a0-%a3
     rts
 
@@ -88,7 +81,7 @@ DRAW_DIGIT_ROW:
     adda.l  %d0,%a3             /* 文字の先頭へ */
     adda.l  %d6,%a3             /* 行方向のオフセット */
 
-    moveq   #4,%d1              /* 4列分ループ(0〜3) */
+    moveq   #5,%d1              /* 4列分ループ(0〜3) */
 COL_LOOP:
     move.b  (%a3)+,%d2
     cmpi.b  #1,%d2
