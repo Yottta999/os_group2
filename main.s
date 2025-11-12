@@ -93,24 +93,49 @@ ROW_LOOP:
 *** %d1 = 行番号 (0〜4)
 *** 各文字は 6文字×5行 固定配置
 ****************************************************************
+*** SEND_DIGIT_ROW:
+*** %d0 = 文字番号 (0〜10)
+*** %d1 = 行番号 (0〜4)
+*** DIGITS は横に 6 バイト／行、5 行（合計30バイト／文字）
+*** アルゴリズム: addr = DIGITS + d0*30 + d1*6
+*** 乗算を即値命令に頼らず、シフト＋加算で実現
 SEND_DIGIT_ROW:
-    lea.l DIGITS, %a0             | 数字フォントテーブル
-    move.l %a0, %a2
+    movem.l  %d2-%d7/%a2,-(%sp)    | 呼び出しで使うレジスタを保存
 
-    move.l %d0, %d3               | %d3 = 文字番号
-    mulu   #30, %d3               | 各文字 = 6×5 = 30バイト
-    adda.l %d3, %a2               | 該当文字へ
+    lea.l   DIGITS, %a2            | a2 = base address の素
+    move.l  %d0, %d3               | d3 = 文字番号
 
-    move.l %d1, %d4               | %d4 = 行番号
-    mulu   #6, %d4                | 各行 = 6文字
-    adda.l %d4, %a2
+    /* d3 = d0 * 30  を  d0*32 - d0*2 で作る (32=<<5, 2=<<1) */
+    move.l  %d3, %d4               | d4 = d0
+    lsl.l   #5, %d4                | d4 = d0 * 32
+    move.l  %d3, %d5               | d5 = d0
+    lsl.l   #1, %d5                | d5 = d0 * 2
+    sub.l   %d5, %d4               | d4 = d0*30
 
-    move.l #SYSCALL_NUM_PUTSTRING, %d0
-    clr.l  %d1
-    move.l %a2, %d2
-    move.l #6, %d3                | 6文字出力
-    trap #0
-	rts
+    /* d4 をアドレスオフセットとして a2 に足す */
+    add.l   %d4, %a2               | a2 -> DIGITS + d0*30
+
+    /* d1 * 6 = d1*4 + d1*2 を作る */
+    move.l  %d1, %d4               | d4 = d1
+    lsl.l   #2, %d4                | d4 = d1 * 4
+    move.l  %d1, %d5               | d5 = d1
+    lsl.l   #1, %d5                | d5 = d1 * 2
+    add.l   %d5, %d4               | d4 = d1 * 6
+
+    /* 行オフセットを a2 に追加 -> a2 = DIGITS + d0*30 + d1*6 */
+    add.l   %d4, %a2
+
+    /* a2 が出力バッファ位置を指す（行の先頭に相当）なので、
+       そこから6バイトを PUTSTRING で送る */
+    move.l  #SYSCALL_NUM_PUTSTRING, %d0
+    clr.l   %d1
+    move.l  %a2, %d2
+    move.l  #6, %d3
+    trap    #0
+
+    movem.l  (%sp)+, %d2-%d7/%a2   | 復帰
+    rts
+
 
 	
 .section .data
