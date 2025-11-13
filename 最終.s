@@ -88,9 +88,10 @@ DISPLAY_UPDATE:
     bra LED_DISPLAY
 
 TTKILL:
-    clr.w TTC
-    move.l #SYSCALL_NUM_RESET_TIMER, %d0
-    trap #0
+	clr.w TTC
+	clr.b MINC
+	move.b #0xff, SECC
+
 
 TTEND:
     movem.l (%sp)+, %d0-%d7/%a0-%a3
