@@ -46,7 +46,17 @@ LOOP:
     eor.b #1, %d0
     move.b %d0, MODE
     bra LOOP
+DEBOUNCE_LOOP:
+    move.l #SYSCALL_NUM_GETSTRING, %D0
+    move.l #0, %D1
+    move.l #BUF, %D2
+    move.l #256, %D3
+    trap #0
+    move.b BUF, %d0
+    cmpi.b #'c', %d0
+    beq DEBOUNCE_LOOP
 
+    bra LOOP
 ********************************
 * タイマ割込み処理（１秒ごと）
 ********************************
