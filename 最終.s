@@ -1,4 +1,3 @@
-
 ****************************************************************
 *** プログラム領域
 ****************************************************************
@@ -30,33 +29,35 @@ MAIN:
 ******************************
 * 空ループ
 ******************************
-LOOP:
+LOOP1:
     move.l #SYSCALL_NUM_GETSTRING, %D0
-    move.l #0, %D1     | ch = 0
-    move.l #BUF, %D2   | p = #BUF
-    move.l #256, %D3   | size = 256
+    move.l #0, %D1 | ch = 0
+    move.l #BUF, %D2 | p = #BUF
+    move.l #256, %D3 | size = 256
     trap #0
-
-    move.b BUF, %d0
-    cmpi.b #'c', %d0
-    bne LOOP   
-
-    /* MODE変更 (0=簡易, 1=7セグ) */
-    move.b MODE, %d0
-    eor.b #1, %d0
-    move.b %d0, MODE
-    bra LOOP
-DEBOUNCE_LOOP:
+    move.b BUF, %d4
+    cmpi.b #'c', %d4
+    bne LOOP1   
+    bra CHANGE_MODE
+LOOP2:
     move.l #SYSCALL_NUM_GETSTRING, %D0
     move.l #0, %D1
     move.l #BUF, %D2
     move.l #256, %D3
     trap #0
-    move.b BUF, %d0
-    cmpi.b #'c', %d0
-    beq DEBOUNCE_LOOP
-
-    bra LOOP
+    move.b BUF, %d4
+    cmpi.b #'v', %d4
+    bne LOOP2
+	
+CHANGE_MODE:	
+    /* MODE変更 (0=簡易, 1=7セグ) */
+    move.b MODE, %d0
+    eor.b #1, %d0
+    move.b %d0, MODE
+    cmpi.b #0, %d0
+    beq LOOP1
+    bra LOOP2
+	
 ********************************
 * タイマ割込み処理（１秒ごと）
 ********************************
@@ -99,6 +100,14 @@ TTEND:
 *** 
 ***************************************************************
 SIMPLE_DISPLAY:
+    move.b #0x20,LED0
+    move.b #0x20,LED1
+    move.b #0x20,LED2
+    move.b #0x20,LED3
+    move.b #0x20,LED4
+    move.b #0x20,LED5
+    move.b #0x20,LED6
+    move.b #0x20,LED7
     lea.l NUM, %a2           | 数字テーブル
     lea.l DISP, %a3          | 出力先 "00:00\r"
     move.b  (%a1), %d0
@@ -135,15 +144,15 @@ LED_DISPLAY:
     lea.l NUM, %a2           | 数字テーブル
     move.b  (%a1), %d0
     jsr     CALC_OFFSET
-    move.b  (%a2, %d5.w), LED1
-    move.b  (%a2, %d6.w), LED2
+    move.b  (%a2, %d5.w), LED5
+    move.b  (%a2, %d6.w), LED4
 
     move.b  #':', LED3
 
     move.b  (%a0), %d0
     jsr     CALC_OFFSET
-    move.b  (%a2, %d5.w), LED4
-    move.b  (%a2, %d6.w), LED5
+    move.b  (%a2, %d5.w), LED2
+    move.b  (%a2, %d6.w), LED1
 
     bra TTEND
 
