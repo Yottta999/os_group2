@@ -86,3 +86,36 @@ void addq(TCB_TYPE* q_ptr, int task_id) {
 	q_ptr = &task_tab[next];   // ポインタを次のタスクに進める
     }
 }
+
+int removeq(TCB_TYPE* q_ptr) {
+    int task_id;
+    // semaphore キューの場合
+    for (int i = 0; i < NUMSEMAPHORE; i++) {
+        if (q_ptr == &task_tab[semaphore[i].task_list]) {
+            task_id = semaphore[i].task_list; // task_id = キューの先頭タスクID
+            semaphore[i].task_list = (*q_ptr).next; // 先頭タスクをキューから取り除く
+            (*q_ptr).next = NULLTASKID;
+            return task_id;
+        }
+    }
+
+    // ready キューの場合
+    if (q_ptr == &task_tab[ready]) {
+        task_id = ready; // task_id = キューの先頭タスクID
+        ready = (*q_ptr).next; // 先頭タスクをキューから取り除く
+        int y = task_tab[ready].next;
+        for (int i = 0; i < 10; i++) {
+            y = task_tab[y].next;
+        }
+        (*q_ptr).next = NULLTASKID;
+        return task_id;
+    }
+        return NULLTASKID;
+}
+
+void sched() {
+    int next_task = removeq(&task_tab[ready]); // next_task = readyキューの先頭タスクID
+    while (next_task == NULLTASKID) { // next_task = NULLTASKID なら無限ループ 
+    }
+}
+
