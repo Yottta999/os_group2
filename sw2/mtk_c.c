@@ -55,9 +55,19 @@ void v_body(int ID) {
 }
 
 void sleep(int ch) {
-  
+  SEMAPHORE_tYPE *sema = &semaphore[ch];
+  addq(&(sema->task_list), curr_task);
+  task_tab[curr_task].status = TASK_SLEEP;
+  sched();
+  switch();    
 }
 
 void wakeup(int ch){
+  SEMAPHORE_tYPE *sema = &semaphore[ch];
+  TASK_ID_TYPE woken_task_id = removeq(&(sema->task_list));
 
+  if (woken_task_id != NULLTASKID) {
+    addq(&ready, woken_task_id);
+    task_tab[woken_task_id].status = TASK_CURRENT;
+  }
 }
