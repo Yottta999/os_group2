@@ -65,6 +65,7 @@ hard_clock:
 	jsr swtch /*swtchの呼び出し*/
 	**movem.l (%SP)+, %D1-%D2/*レジスタの復帰*/
 	rts
+.global init_timer
 init_timer:
 	/*タイマのリセットをする*/
 	move.l #SYSCALL_NUM_RESET_TIMER, %D0
