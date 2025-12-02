@@ -114,3 +114,42 @@ void sched() {
     while (next_task == NULLTASKID); // next_task = NULLTASKID なら無限ループ 
 }
 
+void p_body(int ID) {
+  // セマフォIDがスタックに積まれている
+  // 1.セマフォの値を減らす
+  SEMAPHORE_TYPE *sema = &semaphore[ID];
+  sema->count -= 1;
+  // 2.マフォが獲得できなけれれば sleep(セマフォの ID)
+  if (sema->count < 0) {
+    sleep(ID);
+  } 
+}
+
+void v_body(int ID) {
+  // セマフォIDがスタックに積まれている
+  // 1.セマフォの値を増やす
+  SEMAPHORE_TYPE *sema = &semaphore[ID];
+  sema->count += 1;
+  // 2.セマフォが空けば，wakeup(セマフォの ID) 
+  if (sema->count <= 0) {
+    wakeup(ID);
+  } 
+}
+
+void sleep(int ch) {
+  SEMAPHORE_TYPE *sema = &semaphore[ch]; /*セマフォのポインタの取得p38*/
+  addq(&(sema->task_list), curr_task); /*現在実行中のタスクcurrent_taskを、セマフォの待ち行列(task_list)の末尾に追加する。*/
+  task_tab[curr_task].status = TASK_SLEEP; /*タスクの状態を管理(TCBのstatusを管理する)*/
+  sched();
+  swtch();    
+}
+
+void wakeup(int ch){
+  SEMAPHORE_TYPE *sema = &semaphore[ch];
+  TASK_ID_TYPE woken_task_id = removeq(&(sema->task_list));
+
+  if (woken_task_id != NULLTASKID) {
+    addq(&ready, woken_task_id);
+    task_tab[woken_task_id].status = TASK_READY;
+  }
+}
