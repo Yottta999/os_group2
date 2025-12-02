@@ -49,8 +49,21 @@ void set_task(void (*task_addr)()) {
     TCB_TYPE *tcb = &task_tab[new_task];
     tcb->task_addr = task_addr;    // task_addrを登録
     tcb->status = TASK_INUSE;      // statusを登録
-    tcb->stack_ptr = init_stack(); // stack_ptrを登録
+    tcb->stack_ptr = init_stack(new_task); // stack_ptrを登録
     ready = new_task;
+}
+
+void *init_stack(TASK_ID_TYPE id) {
+    char *ustack_top = stacks[id - 1].ustack + STKSIZE;
+    char *sstack = stacks[id - 1].sstack;
+    int *ssp = (int *)(sstack + STKSIZE);
+    *(--ssp) = (int)task_tab[id].task_addr;
+    short *ssp_s = (short*)ssp;
+    *(--ssp_s) = (short)0x0000;
+    ssp = (int*)ssp_s;
+    ssp -= 15;
+    *(--ssp) = (int)ustack_top;
+    return NULL;
 }
 
 void begin_sch() {

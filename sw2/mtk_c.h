@@ -42,7 +42,7 @@ extern SEMAPHORE_TYPE semaphore[NUMSEMAPHORE];
 /* multi task */
 void init_kernel();
 void set_task(void (*task_addr)());
-void *init_stack();
+void *init_stack(TASK_ID_TYPE id);
 void begin_sch();
 void addq(TCB_TYPE *q, int task_id);
 TASK_ID_TYPE removeq(TCB_TYPE *q);
