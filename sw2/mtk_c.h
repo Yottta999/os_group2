@@ -44,9 +44,13 @@ void init_kernel();
 void set_task(void (*task_addr)());
 void *init_stack();
 void begin_sch();
-void addq();
-void removeq();
+void addq(TCB_TYPE *q, int task_id);
+TASK_ID_TYPE removeq(TCB_TYPE *q);
 void sched();
+extern void first_task();
+
+/* timer */
+extern void init_timer();
 
 /* semaphore */
 void sleep();

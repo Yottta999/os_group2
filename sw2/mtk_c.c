@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 #include "mtk_c.h"
 
 TASK_ID_TYPE curr_task;
@@ -22,7 +23,7 @@ void init_kernel() {
     // readyキューを初期化する
     ready = NULLTASKID;
     // pv_handlerをTRAP #1の割り込みベクタに登録
-    *(int *)(TRAP1_ID * 4) = (int)pv_handler;
+    *(int *)(TRAP1_ID * 4) = (int)(uintptr_t)pv_handler;
     // セマフォの値を初期化する
     for (int i = 0; i < NUMSEMAPHORE; i++) {
         SEMAPHORE_TYPE *sema = &semaphore[i];
@@ -50,6 +51,12 @@ void set_task(void (*task_addr)()) {
     tcb->status = TASK_INUSE;      // statusを登録
     tcb->stack_ptr = init_stack(); // stack_ptrを登録
     ready = new_task;
+}
+
+void begin_sch() {
+    curr_task = removeq(&task_tab[ready]); // 最初のタスクの決定
+    init_timer(); // タイマの設定
+    first_task(); // 最初のタスクへ遷移
 }
 
 void addq(TCB_TYPE* q_ptr, int task_id) {
