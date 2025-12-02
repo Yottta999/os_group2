@@ -57,8 +57,7 @@ swtch:
     * 7. タスク切り替え 
     rte
 
-// TODO: implement
-//タイマ関連のサブルーチン
+* タイマ関連のサブルーチン
 hard_clock:
 	**movem.l (レジスタ), -(%SP) /*実行中のタスクのレジスタ退避*/
 	jsr addq /*addqの呼び出し*/
