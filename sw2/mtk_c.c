@@ -68,6 +68,6 @@ void wakeup(int ch){
 
   if (woken_task_id != NULLTASKID) {
     addq(&ready, woken_task_id);
-    task_tab[woken_task_id].status = TASK_CURRENT;
+    task_tab[woken_task_id].status = TASK_READY;
   }
 }
