@@ -50,7 +50,7 @@ void addq(TCB_TYPE *q, TASK_ID_TYPE task_id);
 TASK_ID_TYPE removeq(TCB_TYPE *q);
 void sched();
 extern void first_task();
-
+extern void swtch();
 /* timer */
 extern void init_timer();
 
