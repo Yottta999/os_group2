@@ -59,7 +59,7 @@ void sleep(int ch) {
   addq(&(sema->task_list), curr_task);
   task_tab[curr_task].status = TASK_SLEEP;
   sched();
-  switch();    
+  swtch();    
 }
 
 void wakeup(int ch){
