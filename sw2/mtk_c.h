@@ -6,6 +6,8 @@
 #define TASK_UNDEF    0
 #define TASK_CURRENT  1
 #define TASK_FINISHED 2
+#define TASK_READY    3
+#define TASK_SLEEP    4 
 
 typedef int TASK_ID_TYPE;
 
