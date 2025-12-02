@@ -53,6 +53,12 @@ void set_task(void (*task_addr)()) {
     ready = new_task;
 }
 
+void begin_sch() {
+    curr_task = removeq(&task_tab[ready]); // 最初のタスクの決定
+    init_timer(); // タイマの設定
+    first_task(); // 最初のタスクへ遷移
+}
+
 void *init_stack(TASK_ID_TYPE id) {
     char *ustack_top = stacks[id - 1].ustack + STKSIZE;
     char *sstack = stacks[id - 1].sstack;
@@ -63,13 +69,7 @@ void *init_stack(TASK_ID_TYPE id) {
     ssp = (int*)ssp_s;
     ssp -= 15;
     *(--ssp) = (int)ustack_top;
-    return NULL;
-}
-
-void begin_sch() {
-    curr_task = removeq(&task_tab[ready]); // 最初のタスクの決定
-    init_timer(); // タイマの設定
-    first_task(); // 最初のタスクへ遷移
+    return ssp;
 }
 
 void addq(TCB_TYPE* q_ptr, int task_id) {
