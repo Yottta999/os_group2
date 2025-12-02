@@ -72,23 +72,23 @@ void *init_stack(TASK_ID_TYPE id) {
     return ssp;
 }
 
-void addq(TCB_TYPE* q_ptr, int task_id) {
+void addq(TCB_TYPE* q_ptr, TASK_ID_TYPE task_id) {
     int next;
     for (int i = 1; i < NUMTASK + 1; i++) {
         next = (*q_ptr).next;
-	if (next == NULLTASKID) {      // キュー末尾なら
-	    (*q_ptr).next = task_id;   // 末尾にtask_idのTCBを登録
-	    if (task_tab[task_id].next != NULLTASKID) { 
-	        task_tab[task_id].next = NULLTASKID;  // task_tab[task_id]がキューの末尾であることを示す
-	    }
+        if (next == NULLTASKID) {      // キュー末尾なら
+            (*q_ptr).next = task_id;   // 末尾にtask_idのTCBを登録
+            if (task_tab[task_id].next != NULLTASKID) { 
+                task_tab[task_id].next = NULLTASKID;  // task_tab[task_id]がキューの末尾であることを示す
+            }
             return;
-	}
-	q_ptr = &task_tab[next];   // ポインタを次のタスクに進める
+        }
+        q_ptr = &task_tab[next];   // ポインタを次のタスクに進める
     }
 }
 
-int removeq(TCB_TYPE* q_ptr) {
-    int task_id;
+TASK_ID_TYPE removeq(TCB_TYPE* q_ptr) {
+    TASK_ID_TYPE task_id;
     // semaphore キューの場合
     for (int i = 0; i < NUMSEMAPHORE; i++) {
         if (q_ptr == &task_tab[semaphore[i].task_list]) {
@@ -103,19 +103,14 @@ int removeq(TCB_TYPE* q_ptr) {
     if (q_ptr == &task_tab[ready]) {
         task_id = ready; // task_id = キューの先頭タスクID
         ready = (*q_ptr).next; // 先頭タスクをキューから取り除く
-        int y = task_tab[ready].next;
-        for (int i = 0; i < 10; i++) {
-            y = task_tab[y].next;
-        }
         (*q_ptr).next = NULLTASKID;
         return task_id;
     }
-        return NULLTASKID;
+    return NULLTASKID;
 }
 
 void sched() {
-    int next_task = removeq(&task_tab[ready]); // next_task = readyキューの先頭タスクID
-    while (next_task == NULLTASKID) { // next_task = NULLTASKID なら無限ループ 
-    }
+    TASK_ID_TYPE next_task = removeq(&task_tab[ready]); // next_task = readyキューの先頭タスクID
+    while (next_task == NULLTASKID); // next_task = NULLTASKID なら無限ループ 
 }
 
