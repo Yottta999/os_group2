@@ -1,7 +1,7 @@
 // TODO: implement
+.include "defs.s"
 .section .text
-.equ SUSCALL_NUM_RESET_TIMER, 3
-.equ SYSCALL_NUM_SET_TIMER, 4
+//タイマ関連のサブルーチン
 hard_clock:
 	**movem.l (レジスタ), -(%SP) /*実行中のタスクのレジスタ退避*/
 	jsr addq /*addqの呼び出し*/
