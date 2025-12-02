@@ -55,9 +55,9 @@ void v_body(int ID) {
 }
 
 void sleep(int ch) {
-  SEMAPHORE_TYPE *sema = &semaphore[ch];
-  addq(&(sema->task_list), curr_task);
-  task_tab[curr_task].status = TASK_SLEEP;
+  SEMAPHORE_TYPE *sema = &semaphore[ch]; /*セマフォのポインタの取得p38*/
+  addq(&(sema->task_list), curr_task); /*現在実行中のタスクcurrent_taskを、セマフォの待ち行列(task_list)の末尾に追加する。*/
+  task_tab[curr_task].status = TASK_SLEEP; /*タスクの状態を管理(TCBのstatusを管理する)*/
   sched();
   swtch();    
 }
