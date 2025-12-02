@@ -59,11 +59,11 @@ swtch:
 
 * タイマ関連のサブルーチン
 hard_clock:
-	**movem.l (レジスタ), -(%SP) /*実行中のタスクのレジスタ退避*/
+	**movem.l %D1-%D2, -(%SP) /*実行中のタスクのレジスタ退避*/
 	jsr addq /*addqの呼び出し*/
 	jsr sched /*schedの呼びだし*/
 	jsr swtch /*swtchの呼び出し*/
-	**movem.l (%SP)+, (レジスタ)/*レジスタの復帰*/
+	**movem.l (%SP)+, %D1-%D2/*レジスタの復帰*/
 	rts
 init_timer:
 	/*タイマのリセットをする*/
