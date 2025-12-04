@@ -44,13 +44,16 @@ void set_task(void (*task_addr)()) {
         }
     }
     if (task_id == NULLTASKID) return; // 空きがない
-    new_task = task_id; // 空いていたTCBのIDをnew_tabに代入
+    new_task = task_id; // 空いていたTCBのIDをnew_taskに代入
 
     TCB_TYPE *tcb = &task_tab[new_task];
     tcb->task_addr = task_addr;    // task_addrを登録
     tcb->status = TASK_INUSE;      // statusを登録
     tcb->stack_ptr = init_stack(new_task); // stack_ptrを登録
+
+    if (ready == NULLTASKID) ready = new_task; // ?????????????????????????????????????????
     addq(&task_tab[ready], new_task);
+    printf("[OK] set_task\n");
 }
 
 void begin_sch() {
