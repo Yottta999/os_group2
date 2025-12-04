@@ -9,6 +9,14 @@ void task2() {
     while (1) printf("task2 ");
 }
 
+void dump_queue(TASK_ID_TYPE queue_head) {
+    printf("[DEBUG] dump ready queue\n");
+    for (TASK_ID_TYPE id = queue_head; id != NULLTASKID; id = task_tab[id].next) {
+        TCB_TYPE *cur = &task_tab[id];
+        printf("[DEBUG] task id = %d, task_addr = %d\n", id, (int) cur->task_addr);
+    }
+}
+
 int main() {
     printf("BOOTING\n");
     init_kernel();
@@ -18,6 +26,9 @@ int main() {
     set_task(task2);
 
     printf("[START] begin_sch\n");
-    printf("sizeof TCB_TYPE = %d\n", sizeof(TCB_TYPE));
+    printf("[DEBUG] sizeof TCB_TYPE = %ld\n", sizeof(TCB_TYPE));
+    printf("[DEBUG] ready = %d\n", ready);
+    dump_queue(ready);
+
     begin_sch();
 }

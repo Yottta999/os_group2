@@ -50,26 +50,26 @@ void set_task(void (*task_addr)()) {
     tcb->task_addr = task_addr;    // task_addrを登録
     tcb->status = TASK_INUSE;      // statusを登録
     tcb->stack_ptr = init_stack(new_task); // stack_ptrを登録
-    ready = new_task;
+    addq(&task_tab[ready], new_task);
 }
 
 void begin_sch() {
     curr_task = removeq(&task_tab[ready]); // 最初のタスクの決定
-    printf("curr_task = %d\n", curr_task);
+    printf("[DEBUG] curr_task = %d\n", curr_task);
     init_timer(); // タイマの設定
     printf("[OK] init_timer\n");
     first_task(); // 最初のタスクへ遷移
 }
 
 void *init_stack(TASK_ID_TYPE id) {
-    char *ustack_top = stacks[id - 1].ustack + STKSIZE;
+    char *ustack_top = &stacks[id - 1].ustack[STKSIZE];
     char *sstack = stacks[id - 1].sstack;
     int *ssp = (int *)(sstack + STKSIZE);
-    *(--ssp) = (int)task_tab[id].task_addr;
+    *(--ssp) = (int)task_tab[id].task_addr; // initial PC
     short *ssp_s = (short*)ssp;
-    *(--ssp_s) = (short)0x0000;
+    *(--ssp_s) = (short)0x0000; // initial SR
     ssp = (int*)ssp_s;
-    ssp -= 15;
+    ssp -= 15; // 15x4 bytes for registers
     *(--ssp) = (int)ustack_top;
     return ssp;
 }
