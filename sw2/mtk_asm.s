@@ -34,6 +34,8 @@ swtch:
 
     * 2. 実行中のタスクのレジスタの退避
     movem.l %D0-%D7/%A0-%A6, -(%SP)
+    move.l %USP, %A1
+    move.l %A1, -(%SP)
 
     * 3. SSPの保存
     move.l curr_task, %D1      | %D1.l = curr_task
@@ -42,8 +44,10 @@ swtch:
     add.l %D1, %A1             | %A1.l = &task_tab[curr_task]
     move.l %SP, (%A1)          | *%A1 = %SP
 
+    move.b #'4', LED4
+
     * 4. curr_task を変更
-    move.l (next_task), (curr_task)
+    move.l next_task, curr_task
 
     * 5. 次のタスクの SSP の読み出し
     move.l curr_task, %D1      | %D1.l = curr_task
@@ -55,18 +59,36 @@ swtch:
     move.l TCB_TYPE_STACK_PTR_OFFSET(%A1), %SP
 
     * 6. 次のタスクのレジスタの読み出し
-    movem.l (%SP)+, %D0-%D7/%A0-%A7
+    move.l (%SP)+, %A1
+    move.l %A1, %USP
+    movem.l (%SP)+, %D0-%D7/%A0-%A6
+    move.b #'5', LED5
 
     * 7. タスク切り替え 
     rte
 
 * タイマ関連のサブルーチン
+.even
 hard_clock:
-	**movem.l %D1-%D2, -(%SP) /*実行中のタスクのレジスタ退避*/
+    movem.l %D1/%A1, -(%SP)
+    move.b #'0', LED0
+
+    * addqに渡す引数をスタックに詰める（右から左）
+    move.l curr_task, -(%SP)
+    * TCB 先頭番地の計算：ready の TCB のアドレスを見つける
+    move.l ready, %D1          | %D1.l = ready
+    muls #SIZEOF_TCB_TYPE, %D1 | %D1.l = ready * SIZEOF_TCB_TYPE
+    lea.l task_tab, %A1        | %A1.l = task_tab
+    add.l %D1, %A1             | %A1.l = &task_tab[ready]
+    move.l %A1, -(%SP)
 	jsr addq /*addqの呼び出し*/
+
+    move.b #'1', LED1
 	jsr sched /*schedの呼びだし*/
+    move.b #'2', LED2
 	jsr swtch /*swtchの呼び出し*/
-	**movem.l (%SP)+, %D1-%D2/*レジスタの復帰*/
+    move.b #'3', LED3
+    movem.l (%SP)+, %D1/%A1
 	rts
 
 .global init_timer
