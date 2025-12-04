@@ -13,12 +13,14 @@ first_task:
     lea.l task_tab, %A1        | %A1.l = task_tab
     add.l %D1, %A1             | %A1.l = &task_tab[curr_task]
 
-    * 2. SSPの値の回復
-    * %SP(SSP) = &task_tab[curr_task]->stack_ptr
+    * 2. USP，SSP の値の回復
+    * %SSP = &task_tab[curr_task]->stack_ptr
     move.l TCB_TYPE_STACK_PTR_OFFSET(%A1), %SP
+    move.l (%SP)+, %A1
+    move.l %A1, %USP
 
-    * 3. USPを含めた、残りの全レジスタの回復
-    movem.l (%SP)+, %D0-%D7/%A0-%A7
+    * 3. 残りの全レジスタの回復
+    movem.l (%SP)+, %D0-%D7/%A0-%A6
 
     * 4. ユーザタスクの起動（SR,PCの復帰）
     rte
@@ -31,7 +33,7 @@ swtch:
     move.w %SR, -(%SP) 
 
     * 2. 実行中のタスクのレジスタの退避
-    movem.l %D0-%D7/%A0-%A7, -(%SP)
+    movem.l %D0-%D7/%A0-%A6, -(%SP)
 
     * 3. SSPの保存
     move.l curr_task, %D1      | %D1.l = curr_task
