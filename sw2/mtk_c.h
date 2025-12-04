@@ -55,7 +55,7 @@ extern void swtch();
 extern void init_timer();
 
 /* semaphore */
-void sleep();
-void wakeup();
-void p_body();
-void v_body();
+void sleep(int ch);
+void wakeup(int ch);
+void p_body(int ID);
+void v_body(int ID);

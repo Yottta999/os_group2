@@ -68,12 +68,12 @@ void *init_stack(TASK_ID_TYPE id) {
     char *ustack_top = &stacks[id - 1].ustack[STKSIZE];
     char *sstack = stacks[id - 1].sstack;
     int *ssp = (int *)(sstack + STKSIZE);
-    *(--ssp) = (int)task_tab[id].task_addr; // initial PC
+    *(--ssp) = (int)(uintptr_t)task_tab[id].task_addr; // initial PC
     short *ssp_s = (short*)ssp;
     *(--ssp_s) = (short)0x0000; // initial SR
     ssp = (int*)ssp_s;
     ssp -= 15; // 15x4 bytes for registers
-    *(--ssp) = (int)ustack_top;
+    *(--ssp) = (int)(uintptr_t)ustack_top;
     return ssp;
 }
 
@@ -109,7 +109,7 @@ TASK_ID_TYPE removeq(TCB_TYPE* q_ptr) {
 }
 
 void sched() {
-    TASK_ID_TYPE next_task = removeq(&task_tab[ready]); // next_task = readyキューの先頭タスクID
+    next_task = removeq(&task_tab[ready]); // next_task = readyキューの先頭タスクID
     while (next_task == NULLTASKID); // next_task = NULLTASKID なら無限ループ 
 }
 

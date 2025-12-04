@@ -42,9 +42,7 @@ swtch:
     muls #SIZEOF_TCB_TYPE, %D1 | %D1.l = curr_task * SIZEOF_TCB_TYPE
     lea.l task_tab, %A1        | %A1.l = task_tab
     add.l %D1, %A1             | %A1.l = &task_tab[curr_task]
-    move.l %SP, (%A1)          | *%A1 = %SP
-
-    move.b #'4', LED4
+    move.l %SP, TCB_TYPE_STACK_PTR_OFFSET(%A1)
 
     * 4. curr_task を変更
     move.l next_task, curr_task
@@ -54,7 +52,6 @@ swtch:
     muls #SIZEOF_TCB_TYPE, %D1 | %D1.l = curr_task * SIZEOF_TCB_TYPE
     lea.l task_tab, %A1        | %A1.l = task_tab
     add.l %D1, %A1             | %A1.l = &task_tab[curr_task]
-    move.l %SP, (%A1)          | *%A1 = %SP
     * %SP(SSP) = &task_tab[curr_task]->stack_ptr
     move.l TCB_TYPE_STACK_PTR_OFFSET(%A1), %SP
 
@@ -62,7 +59,6 @@ swtch:
     move.l (%SP)+, %A1
     move.l %A1, %USP
     movem.l (%SP)+, %D0-%D7/%A0-%A6
-    move.b #'5', LED5
 
     * 7. タスク切り替え 
     rte
@@ -71,7 +67,6 @@ swtch:
 .even
 hard_clock:
     movem.l %D1/%A1, -(%SP)
-    move.b #'0', LED0
 
     * addqに渡す引数をスタックに詰める（右から左）
     move.l curr_task, -(%SP)
@@ -81,13 +76,11 @@ hard_clock:
     lea.l task_tab, %A1        | %A1.l = task_tab
     add.l %D1, %A1             | %A1.l = &task_tab[ready]
     move.l %A1, -(%SP)
+
 	jsr addq /*addqの呼び出し*/
 
-    move.b #'1', LED1
 	jsr sched /*schedの呼びだし*/
-    move.b #'2', LED2
 	jsr swtch /*swtchの呼び出し*/
-    move.b #'3', LED3
     movem.l (%SP)+, %D1/%A1
 	rts
 
