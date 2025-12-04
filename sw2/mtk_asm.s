@@ -25,6 +25,7 @@ first_task:
 
 
 .global swtch
+.even
 swtch:
     * 1. SR をスタックに積んで，RTE で復帰できるようにする．
     move.w %SR, -(%SP) 
@@ -65,7 +66,9 @@ hard_clock:
 	jsr swtch /*swtchの呼び出し*/
 	**movem.l (%SP)+, %D1-%D2/*レジスタの復帰*/
 	rts
+
 .global init_timer
+.even
 init_timer:
 	/*タイマのリセットをする*/
 	move.l #SYSCALL_NUM_RESET_TIMER, %D0
@@ -75,6 +78,7 @@ init_timer:
 	move.w #10000, %D1 /*1秒に設定*/
 	move.l #hard_clock, %D2 /*hard_clockを呼び出すよう設定*/
 	trap #0
+    rts
 
 .include "semasema.s"
 

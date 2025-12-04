@@ -55,7 +55,9 @@ void set_task(void (*task_addr)()) {
 
 void begin_sch() {
     curr_task = removeq(&task_tab[ready]); // 最初のタスクの決定
+    printf("curr_task = %d\n", curr_task);
     init_timer(); // タイマの設定
+    printf("[OK] init_timer\n");
     first_task(); // 最初のタスクへ遷移
 }
 
@@ -137,19 +139,19 @@ void v_body(int ID) {
 }
 
 void sleep(int ch) {
-  SEMAPHORE_TYPE *sema = &semaphore[ch]; /*セマフォのポインタの取得p38*/
-  addq(&(sema->task_list), curr_task); /*現在実行中のタスクcurrent_taskを、セマフォの待ち行列(task_list)の末尾に追加する。*/
-  task_tab[curr_task].status = TASK_SLEEP; /*タスクの状態を管理(TCBのstatusを管理する)*/
-  sched();
-  swtch();    
+    SEMAPHORE_TYPE *sema = &semaphore[ch]; /*セマフォのポインタの取得p38*/
+    addq(&task_tab[sema->task_list], curr_task); /*現在実行中のタスクcurrent_taskを、セマフォの待ち行列(task_list)の末尾に追加する。*/
+    task_tab[curr_task].status = TASK_SLEEP; /*タスクの状態を管理(TCBのstatusを管理する)*/
+    sched();
+    swtch();    
 }
 
 void wakeup(int ch){
-  SEMAPHORE_TYPE *sema = &semaphore[ch];
-  TASK_ID_TYPE woken_task_id = removeq(&(sema->task_list));
-
-  if (woken_task_id != NULLTASKID) {
-    addq(&ready, woken_task_id);
-    task_tab[woken_task_id].status = TASK_READY;
-  }
+    SEMAPHORE_TYPE *sema = &semaphore[ch];
+    TASK_ID_TYPE woken_task_id = removeq(&task_tab[sema->task_list]);
+    
+    if (woken_task_id != NULLTASKID) {
+        addq(&task_tab[ready], woken_task_id);
+        task_tab[woken_task_id].status = TASK_READY;
+    }
 }
