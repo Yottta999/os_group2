@@ -51,7 +51,7 @@ void set_task(void (*task_addr)()) {
     tcb->status = TASK_INUSE;      // statusを登録
     tcb->stack_ptr = init_stack(new_task); // stack_ptrを登録
 
-    if (ready == NULLTASKID) ready = new_task; // ?????????????????????????????????????????
+    if (ready == NULLTASKID) ready = new_task; // readyキューが空ならnew_taskを追加
     addq(&task_tab[ready], new_task);
     printf("[OK] set_task\n");
 }
@@ -78,18 +78,12 @@ void *init_stack(TASK_ID_TYPE id) {
 }
 
 void addq(TCB_TYPE* q_ptr, TASK_ID_TYPE task_id) {
-    int next;
-    for (int i = 1; i < NUMTASK + 1; i++) {
-        next = (*q_ptr).next;
-        if (next == NULLTASKID) {      // キュー末尾なら
-            (*q_ptr).next = task_id;   // 末尾にtask_idのTCBを登録
-            if (task_tab[task_id].next != NULLTASKID) { 
-                task_tab[task_id].next = NULLTASKID;  // task_tab[task_id]がキューの末尾であることを示す
-            }
-            return;
-        }
-        q_ptr = &task_tab[next];   // ポインタを次のタスクに進める
-    }
+    // 引数にキューへのポインタとタスクの ID を取り，その TCB をキューの最後尾に登録する．
+    TCB_TYPE *cur = q_ptr;
+    while (cur->next != NULLTASKID) cur = &task_tab[cur->next];
+    // ここに到達した時点でcur->nextはNULLTASKID
+    cur->next = task_id; // 最後尾に追加
+    task_tab[task_id].next = NULLTASKID; // 新しい最後尾
 }
 
 TASK_ID_TYPE removeq(TCB_TYPE* q_ptr) {
