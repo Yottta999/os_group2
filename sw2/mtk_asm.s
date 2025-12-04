@@ -76,6 +76,7 @@ init_timer:
 	move.l #hard_clock, %D2 /*hard_clockを呼び出すよう設定*/
 	trap #0
 
+.include "semasema.s"
 
 .section .bss
 .extern task_tab

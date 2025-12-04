@@ -1,8 +1,12 @@
+.section .text
+
 *****************************
 	***pv_handler 40ページ！
 	***D0の値でPかVか半別する
 	***D1を引数としてp_body/v_bodyに渡す
 *****************************
+.global pv_handler
+.even
 pv_handler:
 	movem.l %a0-%a6/%D0-%D7, -(%ssp) /*スーパーバイザモードなうだからssp、ユーザ側ならsp。今回はtrap #1が使われるのでスーパーバイザモード*/
 	move.w %SR, %D7 /*SR-->D7であとから復元できるように*/
