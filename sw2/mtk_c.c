@@ -78,6 +78,7 @@ void *init_stack(TASK_ID_TYPE id) {
 }
 
 void addq(TCB_TYPE* q_ptr, TASK_ID_TYPE task_id) {
+    printf("[DEBUG] addq: added task_id = %d\n", task_id);
     // 引数にキューへのポインタとタスクの ID を取り，その TCB をキューの最後尾に登録する．
     TCB_TYPE *cur = q_ptr;
     while (cur->next != NULLTASKID) cur = &task_tab[cur->next];
@@ -93,7 +94,7 @@ TASK_ID_TYPE removeq(TCB_TYPE* q_ptr) {
         if (q_ptr == &task_tab[semaphore[i].task_list]) {
             task_id = semaphore[i].task_list; // task_id = キューの先頭タスクID
             semaphore[i].task_list = (*q_ptr).next; // 先頭タスクをキューから取り除く
-            (*q_ptr).next = NULLTASKID;
+            // (*q_ptr).next = NULLTASKID;
             return task_id;
         }
     }
@@ -102,7 +103,7 @@ TASK_ID_TYPE removeq(TCB_TYPE* q_ptr) {
     if (q_ptr == &task_tab[ready]) {
         task_id = ready; // task_id = キューの先頭タスクID
         ready = (*q_ptr).next; // 先頭タスクをキューから取り除く
-        (*q_ptr).next = NULLTASKID;
+        // (*q_ptr).next = NULLTASKID;
         return task_id;
     }
     return NULLTASKID;
@@ -110,6 +111,7 @@ TASK_ID_TYPE removeq(TCB_TYPE* q_ptr) {
 
 void sched() {
     next_task = removeq(&task_tab[ready]); // next_task = readyキューの先頭タスクID
+    printf("[DEBUG] sched: next_task = %d\n", next_task);
     while (next_task == NULLTASKID); // next_task = NULLTASKID なら無限ループ 
 }
 

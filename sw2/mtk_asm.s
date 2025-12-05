@@ -78,6 +78,7 @@ hard_clock:
     move.l %A1, -(%SP)
 
 	jsr addq /*addqの呼び出し*/
+    addq.l #8, %SP /* %SPを戻す */
 
 	jsr sched /*schedの呼びだし*/
 	jsr swtch /*swtchの呼び出し*/
