@@ -22,8 +22,9 @@
 .equ UTX1, REGBASE+0x906    | UART1 送信レジスタ
 
 /* LED */
+/*ここで指定されたアドレスに表示させたい文字コードを入れることでLED表示を変更できる(室原)*/
 .equ LED7, IOBASE+0x000002f | ボード搭載の LED 用レジスタ
-.equ LED6, IOBASE+0x000002d | 使用法については付録 A.4.3.1
+.equ LED6, IOBASE+0x000002d 
 .equ LED5, IOBASE+0x000002b
 .equ LED4, IOBASE+0x0000029
 .equ LED3, IOBASE+0x000003f
@@ -46,7 +47,7 @@ boot:
     lea.l SYS_STK_TOP, %SP  | スタックポインタの設定
 
     /* 割り込みコントローラの初期化 */
-    move.b #0x40, IVR       | ユーザ割り込みベクタ番号を0x40+levelに設定
+    move.b #0x40, IVR       | ユーザ割り込みベクタ番号を0x40*4(=0x100)+levelに設定
     move.l #0x00ffffff, IMR | 全割り込みマスク
 
     move.l #syscall_handler, 0x080 | TRAP#0の割り込みベクタを登録
@@ -62,58 +63,47 @@ boot:
 
     /* タイマ関係の初期化 (割り込みレベルは 6 に固定されている) */
     move.w #0x0004, TCTL1   | restart, 割り込み不可,
-    | システムクロックの 1/16 を単位として計時，
-    | タイマ使用停止
+                            | システムクロックの 1/16 を単位として計時，
+                            | タイマ使用停止
 
-    move.l #0xff3ffb, IMR | UART1の割り込みを許可
-    move.w #0x2000,%SR    | スーパーバイザモード・走行レベルは0
+    jsr	Init_Q            | キューの初期化
+
+    * move.l #0xff3ffb, IMR | UART1の割り込みを許可
+    move.l #0xff3ff9, IMR | UART1,TIMERの割り込みを許可
+    move.w #0x2000, %SR   | スーパーバイザモード・走行レベルは0
     bra MAIN
 
-/* 現段階での初期化ルーチンの正常動作を確認するため，最後に ’a’ を
- * 送信レジスタ UTX1 に書き込む．’a’ が出力されれば，OK. */
-.section .text
-.even
-MAIN:
-    move.w #0x0800+'s', UTX1
-    move.w #0x0800+'t', UTX1
-    move.w #0x0800+'a', UTX1
-    move.w #0x0800+'r', UTX1
-    move.w #0x0800+'t', UTX1
-    move.w #0x0800+'\n', UTX1
-LOOP:
-    bra LOOP
+
+.include "main.s"
 
 /* 割り込みハンドラ */
 .include "syscall.s"
+.include "queue.s"
+.include "interget.s"
+.include "timer.s"
 
 uart1_interrupt:
+/*送信割り込みベクタと受信割り込みベクタが同じであるため受信レジスタ、送信レジスタの値で送受信割り込みを区別する(室原)*/
     movem.l %D0-%D7/%A0-%A6, -(%SP) | 使用するレジスタをスタックに保存
-    * clr.w %D0                       | D0をクリア
-    * move.w URX1, %D0                | 受信データをD0に格納
-    * ori #0x0800, %D0                | 送信データを用意
-    * move.w %D0, UTX1                | 送信
-
     move.w UTX1, %D0                | UTX1をD0レジスタにコピーし保存しておく
     move.w %D0, %D1                 | 計算用にD1レジスタにコピー
     lsr.w #8, %D1
     lsr.w #7, %D1                   | 15回右シフト（上位ビットは0埋め）
-    cmp.w #0, %D1                   | 0=FIFOが空ではない, 1=空である
-    bne UART1_INTR_SKIP_PUT         | 送信割り込みでないならスキップ
+    cmpi.w #1, %D1                  | 0=FIFOが空ではない, 1=空である（割り込み発生）
+    bne UART1_INTR_SKIP_PUT         | 送信割り込みでないならスキップ 受信割り込みの処理に入る(室原)
     move.l #0, %D1                  | ch=%D1.L=0
     jsr INTERPUT
-    bra UART1_INTR_END
 UART1_INTR_SKIP_PUT:
     move.w URX1, %D3                | 受信レジスタ URX1 を %D3.W にコピー
     move.b %D3, %D2                 | %D3.W の下位 8bit(データ部分) を %D2.B にコピー
     lsr.w #8, %D3
     lsr.w #5, %D3                   | 13回右シフト（上位ビットは0埋め）
     and.w #0x1, %D3                 | 0bit目以外を0に
-    cmp.w #1, %D3                   | 0 = 受信 FIFO にデータがない．1 = データがある
+    cmpi.w #1, %D3                  | 0 = 受信 FIFO にデータがない．1 = データがある
     bne UART1_INTR_SKIP_GET
     clr.l %D1                       | ch = %D1.L = 0, (data = %D2.Bは代入済)
     jsr INTERGET
 UART1_INTR_SKIP_GET:
-UART1_INTR_END:
     movem.l (%SP)+, %D0-%D7/%A0-%A6 | レジスタを復帰
     rte
 
@@ -122,9 +112,12 @@ tmr1_interrupt:
     move.w TSTAT1, %D0              | %D0=TSTAT1
     and.w #0x1, %D0                 | 0bit目以外を0に
     cmp.w #0, %D0
-    beq TMR1_END                    | TSTAT1 の第 0 ビットが 1 となっているかどうかをチェックする．0 ならば rte で復帰
+    beq TMR1_END                    | TSTAT1 の第 0 ビットが 1 となっているかどうかをチェックする．0 ならば rte で復帰 
+    /*TASTAT1の第0ビットが0のときはコンペアイベントが起きていないためタイマ割り込みは起きてない, よって終了処理に移る->今回のタイマはコンペアイベントのみしか使わないため第0ビットだけ調べればよい(室原)*/
     clr.w TSTAT1                    | TSTAT1 を 0 クリア
-    jsr CALL_RP
+    jsr CALL_RP /*タイマ割り込みが発生した時に処理すべきルーチンに移動するためにCALL_RPを呼び出す(室原)*/
 TMR1_END:
     movem.l (%SP)+, %D0-%D7/%A0-%A6 | レジスタを復帰
     rte
+
+.end
